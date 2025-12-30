@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>С Новым Годом, Солнышко!</title>
+    <style>
+        /* Базовые стили для сброса отступов */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            height: 100%;
+            width: 100%;
+            overflow: hidden; /* Запрещаем прокрутку */
+            background-color: #000;
+            position: relative; /* Важно для позиционирования слоев */
+        }
+
+        /* Слой с фоновым изображением */
+        .background-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* object-fit: cover гарантирует, что фото заполнит экран без искажений */
+            object-fit: cover;
+            object-position: center;
+            z-index: 1; /* Нижний слой */
+        }
+
+        /* Слой с холстом (canvas) для снега */
+        #snow-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Чтобы сквозь снег можно было нажимать (если нужно) */
+            z-index: 2; /* Верхний слой, поверх картинки */
+        }
+    </style>
+</head>
+<body>
+
+    <img src="https://files.catbox.moe/7rs96x.png" alt="Новогодняя открытка" class="background-image">
+    
+    <canvas id="snow-canvas"></canvas>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const canvas = document.getElementById('snow-canvas');
+            const ctx = canvas.getContext('2d');
+
+            let width, height;
+            let particles = [];
+
+            // Настройки снега (можно поиграться с этими числами)
+            const particleCount = window.innerWidth < 600 ? 60 : 100; // Меньше снежинок на узких экранах для производительности
+            const maxVelocity = 1.5; // Максимальная скорость падения
+            const minVelocity = 0.3;
+            const maxSize = 2.5;     // Максимальный размер снежинки
+            const minSize = 0.8;
+
+            // Установка размеров холста под размер экрана
+            function resizeCanvas() {
+                width = window.innerWidth;
+                height = window.innerHeight;
+                canvas.width = width;
+                canvas.height = height;
+            }
+
+            // Создание одной снежинки
+            function createParticle() {
+                return {
+                    x: Math.random() * width, // Случайная позиция по горизонтали
+                    y: Math.random() * height, // Случайная позиция по вертикали (для старта)
+                    velocityY: Math.random() * (maxVelocity - minVelocity) + minVelocity, // Скорость падения
+                    velocityX: (Math.random() - 0.5) * 0.5, // Легкое покачивание влево-вправо
+                    size: Math.random() * (maxSize - minSize) + minSize, // Размер
+                    opacity: Math.random() * 0.5 + 0.3 // Прозрачность для реализма
+                };
+            }
+
+            // Инициализация массива снежинок
+            function initParticles() {
+                particles = [];
+                for (let i = 0; i < particleCount; i++) {
+                    particles.push(createParticle());
+                }
+            }
+
+            // Главная функция анимации
+            function animate() {
+                // Очищаем холст перед каждым новым кадром
+                ctx.clearRect(0, 0, width, height);
+
+                // Рисуем и двигаем каждую снежинку
+                particles.forEach(p => {
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${p.opacity})`; // Белый цвет с прозрачностью
+                    ctx.fill();
+
+                    // Обновляем позицию
+                    p.y += p.velocityY;
+                    p.x += p.velocityX;
+
+                    // Если снежинка улетела за нижний край экрана
+                    if (p.y > height) {
+                        p.y = -5; // Возвращаем её наверх
+                        p.x = Math.random() * width; // В новую случайную колонку
+                    }
+                });
+
+                // Запрашиваем следующий кадр анимации
+                requestAnimationFrame(animate);
+            }
+
+            // Запуск
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+            initParticles();
+            animate();
+        });
+    </script>
+
+</body>
+</html>
